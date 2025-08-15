@@ -1,0 +1,35 @@
+import asyncio
+import requests
+import os
+from telegram import Bot
+
+# گرفتن توکن و چت آیدی از متغیر محیطی
+TOKEN = os.getenv("TOKEN", "8286147794:AAGlCB1t6APgnItTmbhOzDsAGdUUfFHP6Oc")
+CHAT_ID = os.getenv("CHAT_ID", "6804519782")
+
+bot = Bot(token=TOKEN)
+sent_coins = set()
+
+async def check_memecoins():
+    global sent_coins
+    while True:
+        try:
+            # گرفتن لیست کوین‌ها از CoinGecko
+            response = requests.get("https://api.coingecko.com/api/v3/coins/list")
+            coins = response.json()
+
+            for coin in coins:
+                if 'meme' in coin['id'].lower() and coin['id'] not in sent_coins:
+                    sent_coins.add(coin['id'])
+                    message = f"میم کوین جدید: {coin['name']} ({coin['id']})\nhttps://www.coingecko.com/en/coins/{coin['id']}"
+                    bot.send_message(chat_id=CHAT_ID, text=message)
+        except Exception as e:
+            print("Error:", e)
+        
+        await asyncio.sleep(60)  # بررسی هر 60 ثانیه
+
+async def main():
+    await check_memecoins()
+
+if __name__ == "__main__":
+    asyncio.run(main())
